@@ -7,5 +7,5 @@ The intended usage is like this: basic-ml-bot.py <path to csv> <target_column>.
 This README needs more work, but here's the to-do:
 
 ### To-Do
-- Edit the package in file output to account for different packages not necessarily sharing the same name as the model
 - Deploy on personal website
+- Implement LightGBM/CatBoost whenever I feel like it

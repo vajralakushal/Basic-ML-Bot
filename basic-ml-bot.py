@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, StratifiedKFold, GridSearchCV
 from sklearn.metrics import accuracy_score, mean_squared_error
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.linear_model import LinearRegression, LogisticRegression, Lasso, Ridge
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, GradientBoostingClassifier, GradientBoostingRegressor
 from sklearn.svm import SVC, SVR
@@ -29,14 +29,16 @@ classification_param_grids = {
         'params': {
             'C': [0.01, 0.1, 1],
             'solver': ['lbfgs', 'liblinear', 'sag', 'saga']
-        }
+        },
+        'package': 'sklearn.linear_model'
     },
     'Decision Tree Classifier': {
         'model': DecisionTreeClassifier(),
         'params': {
             'max_depth': [None] + list(range(10, 51, 10)),
             'min_samples_split': range(2, 11)
-        }
+        },
+        'package': 'sklearn.tree'
     },
     'Random Forest Classifier': {
         'model': RandomForestClassifier(),
@@ -44,7 +46,8 @@ classification_param_grids = {
             'n_estimators': range(10, 201, 10),
             'max_depth': [None] + list(range(10, 51, 10)),
             'min_samples_split': range(2, 11)
-        }
+        },
+        'package': 'sklearn.ensemble'
     },
     'Gradient Boosting Classifier': {
         'model': GradientBoostingClassifier(),
@@ -52,71 +55,82 @@ classification_param_grids = {
             'n_estimators': range(10, 201, 10),
             'learning_rate': [0.001, 0.01, 0.1, 0.3],
             'max_depth': range(3, 11)
-        }
+        },
+        'package': 'sklearn.ensemble'
     },
-    'SVM Classifier': {
+    'SVC': {
         'model': SVC(),
         'params': {
             'C': [0.1, 1, 10, 100],
             'kernel': ['linear', 'poly', 'rbf', 'sigmoid']
-        }
+        },
+        'package': 'sklearn.svm'
     },
-    'k-NN Classifier': {
+    'KNeighbors Classifier': {
         'model': KNeighborsClassifier(),
         'params': {
             'n_neighbors': range(3, 13),
             'weights': ['uniform', 'distance']
-        }
+        },
+        'package': 'sklearn.neighbors'
     },
-    'Naive Bayes': {
+    'Gaussian NB': {
         'model': GaussianNB(),
-        'params': {}
+        'params': {},
+        'package': 'sklearn.naive_bayes'
     },
     'MLP Classifier': {
         'model': MLPClassifier(max_iter=1000),
         'params': {
             'hidden_layer_sizes': [(50,), (100,), (50, 50)],
             'alpha': [0.0001, 0.001, 0.01, 0.1]
-        }
+        },
+        'package': 'sklearn.neural_network'
     },
-    'XGBoost Classifier': {
+    'XGB Classifier': {
         'model': XGBClassifier(use_label_encoder=False, eval_metric='logloss'),
         'params': {
             'n_estimators': range(50, 201, 50),
             'learning_rate': [0.01, 0.05, 0.1, 0.2],
             'max_depth': range(3, 11)
-        }
-    },
-    'CatBoost Classifier': {
-        'model': CatBoostClassifier(verbose=0),
-        'params': {
-            'iterations': range(100, 301, 50),
-            'learning_rate': [0.01, 0.05, 0.1, 0.2],
-            'depth': range(3, 11)
-        }
-    },
-    'LightGBM Classifier': {
-        'model': LGBMClassifier(),
-        'params': {
-            'n_estimators': range(50, 201, 50),
-            'learning_rate': [0.01, 0.05, 0.1, 0.2],
-            'max_depth': range(3, 11)
-        }
+        },
+        'package': 'xgboost'
     }
+    # ,
+    # 'CatBoost Classifier': {
+    #     'model': CatBoostClassifier(verbose=0),
+    #     'params': {
+    #         'iterations': range(100, 301, 50),
+    #         'learning_rate': [0.01, 0.05, 0.1, 0.2],
+    #         'depth': range(3, 11)
+    #     },
+    #     'package': 'catboost'
+    # },
+    # 'LGBM Classifier': {
+    #     'model': LGBMClassifier(),
+    #     'params': {
+    #         'n_estimators': range(50, 201, 50),
+    #         'learning_rate': [0.01, 0.05, 0.1, 0.2],
+    #         'max_depth': range(3, 11)
+    #     },
+    #     'package': 'lightgbm'
+    # }
 }
 
 # Define hyperparameter grids for regression models
 regression_param_grids = {
     'Linear Regression': {
         'model': LinearRegression(),
-        'params': {}
+        'params': {},
+        'package': 'sklearn.linear_model'
     },
     'Decision Tree Regressor': {
         'model': DecisionTreeRegressor(),
         'params': {
             'max_depth': [None] + list(range(10, 51, 10)),
             'min_samples_split': range(2, 11)
-        }
+        },
+        'package': 'sklearn.tree'
     },
     'Random Forest Regressor': {
         'model': RandomForestRegressor(),
@@ -124,7 +138,8 @@ regression_param_grids = {
             'n_estimators': range(10, 201, 10),
             'max_depth': [None] + list(range(10, 51, 10)),
             'min_samples_split': range(2, 11)
-        }
+        },
+        'package': 'sklearn.ensemble'
     },
     'Gradient Boosting Regressor': {
         'model': GradientBoostingRegressor(),
@@ -132,61 +147,71 @@ regression_param_grids = {
             'n_estimators': range(10, 201, 10),
             'learning_rate': [0.001, 0.01, 0.1, 0.3],
             'max_depth': range(3, 11)
-        }
+        },
+        'package': 'sklearn.ensemble'
     },
-    'SVM Regressor': {
+    'SVR': {
         'model': SVR(),
         'params': {
             'C': [0.1, 1, 10, 100],
             'kernel': ['linear', 'poly', 'rbf', 'sigmoid']
-        }
+        },
+        'package': 'sklearn.svm'
     },
-    'k-NN Regressor': {
+    'KNeighbors Regressor': {
         'model': KNeighborsRegressor(),
         'params': {
             'n_neighbors': range(3, 13),
             'weights': ['uniform', 'distance']
-        }
+        },
+        'package': 'sklearn.neighbors'
     },
     'Lasso Regression': {
-        'model': LinearRegression(),
-        'params': {}
+        'model': Lasso(),
+        'params': {},
+        'package': 'sklearn.linear_model'
     },
     'Ridge Regression': {
-        'model': LinearRegression(),
-        'params': {}
+        'model': Ridge(),
+        'params': {},
+        'package': 'sklearn.linear_model'
     },
     'MLP Regressor': {
         'model': MLPRegressor(max_iter=1000),
         'params': {
             'hidden_layer_sizes': [(50,), (100,), (50, 50)],
             'alpha': [0.0001, 0.001, 0.01, 0.1]
-        }
+        },
+        'package': 'sklearn.neural_network'
     },
-    'XGBoost Regressor': {
+    'XGB Regressor': {
         'model': XGBRegressor(),
         'params': {
             'n_estimators': range(50, 201, 50),
             'learning_rate': [0.01, 0.05, 0.1, 0.2],
             'max_depth': range(3, 11)
-        }
-    },
-    'CatBoost Regressor': {
-        'model': CatBoostRegressor(verbose=0),
-        'params': {
-            'iterations': range(100, 301, 50),
-            'learning_rate': [0.01, 0.05, 0.1, 0.2],
-            'depth': range(3, 11)
-        }
-    },
-    'LightGBM Regressor': {
-        'model': LGBMRegressor(),
-        'params': {
-            'n_estimators': range(50, 201, 50),
-            'learning_rate': [0.01, 0.05, 0.1, 0.2],
-            'max_depth': range(3, 11)
-        }
+        },
+        'package': 'xgboost'
     }
+    # ,
+    # 'CatBoost Regressor': {
+    #     'model': CatBoostRegressor(verbose=0),
+    #     'params': {
+    #         'iterations': range(100, 301, 50),
+    #         'learning_rate': [0.01, 0.05, 0.1, 0.2],
+    #         'depth': range(3, 11)
+    #     },
+    #     'package': 'catboost'
+    # },
+    # 'LGBM Regressor': {
+    #     'model': LGBMRegressor(),
+    #     'params': {
+    #         'n_estimators': range(50, 201, 50),
+    #         'learning_rate': [0.01, 0.05, 0.1, 0.2],
+    #         'max_depth': range(3, 11)
+    #     },
+    #     'package': 'lightgbm'
+    # }
 }
 
 # in the past, logistic regression took WAY too long. sometimes it's better just to see the other models ASAP
@@ -234,7 +259,7 @@ def run_classification_models(X, y):
     for name, model_info in classification_param_grids.items():
         model = model_info['model']
         params = model_info['params']
-        grid_search = GridSearchCV(model, params, cv=kf, scoring='accuracy', n_jobs=-1)
+        grid_search = GridSearchCV(model, params, cv=kf, scoring='accuracy', n_jobs=-1, error_score='raise')
         result = run_model_with_timeout(grid_search, X_scaled, y, 300)
         if result:
             best_model = grid_search.best_estimator_
@@ -263,7 +288,7 @@ def run_regression_models(X, y):
     for name, model_info in regression_param_grids.items():
         model = model_info['model']
         params = model_info['params']
-        grid_search = GridSearchCV(model, params, cv=kf, scoring='neg_mean_squared_error', n_jobs=-1)
+        grid_search = GridSearchCV(model, params, cv=kf, scoring='neg_mean_squared_error', n_jobs=-1, error_score='raise')
         result = run_model_with_timeout(grid_search, X_scaled, y, 300)
         if result:
             best_model = grid_search.best_estimator_
@@ -316,13 +341,25 @@ import numpy as np
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
-from sklearn.{model_name.lower().replace(' ', '_')} import {model_name.replace(' ', '')}
+from {classification_param_grids[model_name]['package']} import {model_name.replace(' ', '')}
+import re
 
 def load_data(file_path, target_column):
     data = pd.read_csv(file_path)
-    X = data.drop(columns=[target_column])
+    data = data.rename(columns = lambda x:re.sub('[^A-Za-z0-9_]+', '', x))
+    data = data.dropna()
+    #clean up any qualitative columns and assign them codes
+    non_numeric_cols = data.select_dtypes(exclude=[np.number]).columns.tolist()
+    mappings = {{}}
+    for col in non_numeric_cols:
+        codes, uniques = pd.factorize(data[col])
+        data[col] = codes + 1  # Start codes from 1 instead of 0
+        mappings[col] = {{unique: code + 1 for code, unique in enumerate(uniques)}}
+    
+    x = data.drop(columns=[target_column])
     y = data[target_column]
-    return X, y
+    #print(data)
+    return x, y
 
 def main(file_path, target_column):
     X, y = load_data(file_path, target_column)
@@ -336,7 +373,7 @@ def main(file_path, target_column):
     model.fit(X_train_scaled, y_train)
     y_pred = model.predict(X_test_scaled)
     accuracy = accuracy_score(y_test, y_pred)
-    print(f"Accuracy: {{{{accuracy:.4f}}}}")
+    print(f"Accuracy: {{accuracy:.4f}}")
 
 if __name__ == "__main__":
     import sys
@@ -375,13 +412,25 @@ import numpy as np
 from sklearn.model_selection import KFold, train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
-from sklearn.{model_name.lower().replace(' ', '_')} import {model_name.replace(' ', '')} #need to fix this. packages are not necessarily the same as their Model name
+from {regression_param_grids[model_name]['package']} import {model_name.replace(' ', '')}
+import re
 
 def load_data(file_path, target_column):
     data = pd.read_csv(file_path)
-    X = data.drop(columns=[target_column])
+    data = data.rename(columns = lambda x:re.sub('[^A-Za-z0-9_]+', '', x))
+    data = data.dropna()
+    #clean up any qualitative columns and assign them codes
+    non_numeric_cols = data.select_dtypes(exclude=[np.number]).columns.tolist()
+    mappings = {{}}
+    for col in non_numeric_cols:
+        codes, uniques = pd.factorize(data[col])
+        data[col] = codes + 1  # Start codes from 1 instead of 0
+        mappings[col] = {{unique: code + 1 for code, unique in enumerate(uniques)}}
+    
+    x = data.drop(columns=[target_column])
     y = data[target_column]
-    return X, y
+    #print(data)
+    return x, y
 
 def main(file_path, target_column):
     X, y = load_data(file_path, target_column)
@@ -395,7 +444,7 @@ def main(file_path, target_column):
     model.fit(X_train_scaled, y_train)
     y_pred = model.predict(X_test_scaled)
     mse = mean_squared_error(y_test, y_pred)
-    print(f"MSE: {{{{mse:.4f}}}}")
+    print(f"MSE: {{mse:.4f}}")
 
 if __name__ == "__main__":
     import sys
